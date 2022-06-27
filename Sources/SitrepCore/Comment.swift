@@ -11,11 +11,11 @@
 import Foundation
 
 /// One comment, regular or documentation, from the code
-struct Comment: Encodable {
-    enum CommentType: String, Encodable {
+public struct Comment: Encodable {
+    public enum CommentType: String, Encodable {
         case regular, documentation
     }
 
-    var type: CommentType
-    var text: String
+    public var type: CommentType
+    public var text: String
 }

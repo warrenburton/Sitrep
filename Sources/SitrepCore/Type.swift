@@ -11,34 +11,56 @@
 import Foundation
 
 /// One data type from our code, with a very loose definition of "type"
-class Type: Node {
+public class Type: Node {
     /// All the data we want to be able to write out for debugging purposes
     private enum CodingKeys: CodingKey {
         case name, type, inheritance, comments, body, strippedBody
     }
 
     /// The list of "types" we support
-    enum ObjectType: String {
+    public enum ObjectType: String {
         case `class`, `enum`, `extension`, `protocol`, `struct`
     }
 
     /// The name of the type, eg `ViewController`
-    let name: String
+    public let name: String
+
+    /// The fully chained name of object
+    public var resolvedName: String {
+        var rname = name
+        var _parent = parent
+        while _parent != nil {
+            if let pname = (_parent as? Type)?.name {
+                rname = pname + "." + rname
+            }
+            _parent = _parent?.parent
+        }
+        return rname
+    }
 
     /// The underlying type, e.g. class or struct
-    let type: ObjectType
+    public let type: ObjectType
 
     /// The inheritance clauses attached to this type, including protocol conformances
-    let inheritance: [String]
+    public let inheritance: [String]
 
     /// An array of comments that describe this type
-    let comments: [Comment]
+    public let comments: [Comment]
 
     /// The raw source code for this type
-    let body: String
+    public let body: String
 
     /// The source code for this type, minus empty lines and comments
-    let strippedBody: String
+    public let strippedBody: String
+
+    public var canBeSubType: Bool {
+        switch type {
+        case .struct, .class, .enum, .protocol:
+            return true
+        default:
+            return false
+        }
+    }
 
     /// Creates an instance of Type
     init(type: ObjectType, name: String, inheritance: [String], comments: [Comment], body: String, strippedBody: String) {
@@ -51,7 +73,7 @@ class Type: Node {
     }
 
     /// Encodes the type, so we can produce debug output
-    override func encode(to encoder: Encoder) throws {
+    public override func encode(to encoder: Encoder) throws {
         try super.encode(to: encoder)
 
         var container = encoder.container(keyedBy: CodingKeys.self)

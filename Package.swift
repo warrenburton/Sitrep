@@ -1,15 +1,12 @@
-// swift-tools-version:5.4
+// swift-tools-version:5.6
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
 // IMPORTANT: IF YOU CHANGE THE BELOW, PLEASE ALSO CHANGE THE LARGE FATALERROR()
 // MESSAGE IN FILE.SWIFT TO MATCH THE NEW SWIFT VERSION.
-#if swift(<5.5)
-let swiftSyntaxVersion = Package.Dependency.Requirement.exact("0.50400.0")
-#elseif swift(>=5.5)
-let swiftSyntaxVersion = Package.Dependency.Requirement.exactItem("0.50500.0")
-#endif
+
+let swiftSyntaxVersion = Package.Dependency.Requirement.exactItem("0.50600.1")
 
 let package = Package(
     name: "Sitrep",

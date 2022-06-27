@@ -15,6 +15,7 @@ import ArgumentParser
 public struct Scan {
     /// The URL that was scanned in this run
     let rootURL: URL
+    let isDebug: Bool
 
     public enum ReportType: String, ExpressibleByArgument, CaseIterable {
         /// simple text output
@@ -37,8 +38,9 @@ public struct Scan {
     }
 
     /// Creates an app instance from a URL to a project directory
-    public init(rootURL: URL) {
+    public init(rootURL: URL, isDebug: Bool = false) {
         self.rootURL = rootURL
+        self.isDebug = isDebug
     }
 
     /// Performs the whole app run: scanning files, collating results, then optionally printing a report
@@ -87,12 +89,12 @@ public struct Scan {
         return detectedFiles
     }
 
-    public func parse(files: [URL]) -> (successful: [File], failures: [URL]) {
-        var scannedFiles = [File]()
+    public func parse(files: [URL]) -> (successful: [SourceFile], failures: [URL]) {
+        var scannedFiles = [SourceFile]()
         var failures = [URL]()
 
         for file in files {
-            if let file = try? File(url: file) {
+            if let file = try? SourceFile(url: file, debug: isDebug) {
                 scannedFiles.append(file)
             } else {
                 failures.append(file)
@@ -102,15 +104,17 @@ public struct Scan {
         return (scannedFiles, failures)
     }
 
-    public func collate(_ scannedFiles: [File]) -> Results {
+    public func collate(_ scannedFiles: [SourceFile]) -> Results {
         var results = Results(files: scannedFiles)
 
         var allTypesAndLength = [String: Int]()
         var allTypesByName = [String: Type]()
 
-        for file in scannedFiles {
-            // order all our types by what they are
-            for item in file.results.rootNode.types {
+
+        func collateTypes(_ types: [Type]?) {
+            guard let types = types else { return }
+
+            for item in types {
                 let name = item.name
                 let typeLength = item.strippedBody.lines.count
 
@@ -128,7 +132,14 @@ public struct Scan {
                 } else if item.type == .extension {
                     results.extensions.append(item)
                 }
+                collateTypes(item.types) //falls down tree 
             }
+        }
+
+
+        for file in scannedFiles {
+            // order all our types by what they are
+            collateTypes(file.results.rootNode.types)
 
             // bring all imports together from all files
             results.imports.addObjects(from: file.results.imports)
@@ -156,7 +167,7 @@ public struct Scan {
     }
 
     /// Creates a report object from the scan results
-    public func createReport(for results: Results, files: [File], failures: [URL]) -> Report {
+    public func createReport(for results: Results, files: [SourceFile], failures: [URL]) -> Report {
         let imports = results.imports
             .allObjects
             .sorted { first, second in results.imports.count(for: first) > results.imports.count(for: second) }
@@ -201,7 +212,7 @@ public struct Scan {
     }
 
     /// Prints out the report for a set of files in a pretty printed JSON format
-    func createJSONReport(for results: Results, files: [File], failures: [URL]) -> String {
+    func createJSONReport(for results: Results, files: [SourceFile], failures: [URL]) -> String {
         let report = self.createReport(for: results, files: files, failures: failures)
 
         let encoder = JSONEncoder()
@@ -215,7 +226,7 @@ public struct Scan {
     }
 
     /// Prints out the report for a set of files
-    func createTextReport(for results: Results, files: [File], failures: [URL]) -> String {
+    func createTextReport(for results: Results, files: [SourceFile], failures: [URL]) -> String {
         let report = self.createReport(for: results, files: files, failures: failures)
 
         var output = ["SITREP"]

@@ -14,7 +14,7 @@ import SwiftSyntax
 /// This does the main job of parsing a file into a structure we can analyze.
 /// It organizes the code into a tree of nodes, with any top-level code
 /// being placed into properties.
-class FileVisitor: SyntaxVisitor {
+class FileVisitor: SyntaxVisitor, VisitorProtocol {
     /// The top level of our tree, the file itself
     var rootNode = Node()
 
@@ -30,7 +30,7 @@ class FileVisitor: SyntaxVisitor {
     /// The code for this file, minus comments and whitespace
     var strippedBody = ""
 
-    /// The node that is currently active, such as a class or  function.
+    /// The node that is currently active, such as a class or function.
     lazy var current: Node? = {
         rootNode
     }()
@@ -104,6 +104,10 @@ class FileVisitor: SyntaxVisitor {
         // Flatten the list of parameters for easier storage
         let parameters = node.signature.input.parameterList.compactMap { $0.firstName?.text }
 
+        node.signature.input.parameterList.forEach {
+            print("FPL:|\(type(of:$0)) --> \($0.description)")
+        }
+
         // If we have a return type, copy it here
         if let nodeReturnType = node.signature.output?.returnType {
             returnType = "\(nodeReturnType)"
@@ -124,9 +128,100 @@ class FileVisitor: SyntaxVisitor {
         current = current?.parent
     }
 
-    /// Triggered on entering an identifer pattern – the part of a variable that contains its name
-    override func visit(_ node: IdentifierPatternSyntax) -> SyntaxVisitorContinueKind {
-        current?.variables.append(node.identifier.text)
+    override func visit(_ node: VariableDeclSyntax) -> SyntaxVisitorContinueKind {
+        var isStatic = false
+        // Examine this variables modifiers to figure out whether it's static
+        if let modifiers = node.modifiers {
+            for modifier in modifiers {
+                let modifierText = modifier.withoutTrivia().name.text
+
+                if modifierText == "static" || modifierText == "class" {
+                    isStatic = true
+                }
+            }
+        }
+
+        let letOrVar: Variable.LetOrVar
+        switch node.letOrVarKeyword.text {
+        case "let":
+            letOrVar =  .let
+        case "var":
+            letOrVar = .var
+        default:
+            letOrVar = .let
+        }
+        if let binding = node.bindings.first {
+            print("xx |\(binding.typeAnnotation?.type.description ?? "x")|")
+            let newObject = Variable(
+                isStatic: isStatic,
+                letOrVar: letOrVar,
+                pattern: binding.pattern.description,
+                typeAnnotation: binding.typeAnnotation?.type.description,
+                identifierExpression: nil,
+                initializer: binding.initializer?.value.description
+            )
+
+            // Move one level deeper in our tree
+            newObject.parent = current
+            current?.variables.append(newObject)
+            current = newObject
+        }
+
+        return .visitChildren
+    }
+
+    /// Triggered on exiting a variable; moves back up the tree
+    override func visitPost(_ node: VariableDeclSyntax) {
+        current = current?.parent
+    }
+
+
+    override open func visit(_ node: PatternBindingSyntax) -> SyntaxVisitorContinueKind {
+        print("VPB| \(node.pattern.description)")
+        return .visitChildren
+    }
+
+    override open func visit(_ node: TypeAnnotationSyntax) -> SyntaxVisitorContinueKind {
+        print("VTA| \(node.description)")
+        print("VTA|.colon \(node.colon.description)")
+        print("VTA|.type \(node.type.description)")
+        return .visitChildren
+    }
+
+    override open func visit(_ node: InitializerClauseSyntax) -> SyntaxVisitorContinueKind {
+        return .visitChildren
+    }
+
+    override open func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
+        print("VFC| \(node.description)")
+        return .visitChildren
+    }
+
+
+    override open func visit(_ node: IdentifierExprSyntax) -> SyntaxVisitorContinueKind {
+        print("VIX| \(type(of: node)) -> \(node.description)")
+        if let variable = current as? Variable {
+            variable.identifierExpression = node.description
+        }
+        return .visitChildren
+    }
+
+
+    override open func visit(_ node: TupleExprElementListSyntax) -> SyntaxVisitorContinueKind {
+//        for item in node {
+//            print("\tVTE| \(type(of: item)) -> \(item)")
+//        }
+        return .visitChildren
+    }
+
+
+    override open func visit(_ node: TupleExprElementSyntax) -> SyntaxVisitorContinueKind {
+        print("\tVTE| \(type(of: node)) -> \(node.description)")
+        return .visitChildren
+    }
+
+    override open func visit(_ node: UnknownSyntax) -> SyntaxVisitorContinueKind {
+        print("VUN| UnknownSyntax -> \(node.description)")
         return .visitChildren
     }
 
@@ -207,7 +302,14 @@ class FileVisitor: SyntaxVisitor {
         let name = node.name
             .trimmingCharacters(in: .whitespaces)
 
-        let newObject = Type(type: type, name: name, inheritance: inheritanceClause, comments: comments(for: node._syntaxNode), body: nodeBody, strippedBody: nodeBodyStripped)
+        let newObject = Type(
+            type: type,
+            name: name,
+            inheritance: inheritanceClause,
+            comments: comments(for: node._syntaxNode),
+            body: nodeBody,
+            strippedBody: nodeBodyStripped
+        )
 
         newObject.parent = current
         current?.types.append(newObject)

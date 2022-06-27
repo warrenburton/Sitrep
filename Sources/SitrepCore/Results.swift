@@ -12,72 +12,72 @@ import Foundation
 
 public struct Results {
     /// All the files detected by this scan
-    var files: [File]
+    var files: [SourceFile]
 
     /// All the classes detected across all files
-    var classes = [Type]()
+    public var classes = [Type]()
 
     /// All the structs detected across all files
-    var structs = [Type]()
+    public var structs = [Type]()
 
     /// All the enums detected across all files
-    var enums = [Type]()
+    public var enums = [Type]()
 
     /// All the protocols detected across all files
-    var protocols = [Type]()
+    public var protocols = [Type]()
 
     /// All the extensions detected across all files
-    var extensions = [Type]()
+    public var extensions = [Type]()
 
     /// All the imports detected across all files, stored with frequency
-    var imports = NSCountedSet()
+    public var imports = NSCountedSet()
 
     /// A string containing all code in all files
-    var totalCode = ""
+    public var totalCode = ""
 
     /// A string containing all stripped code in all files
-    var totalStrippedCode = ""
+    public var totalStrippedCode = ""
 
     /// The number of lines in the longest file
-    var longestFileLength = 0
+    public var longestFileLength = 0
 
     /// The File object storing the longest file that was scanned
-    var longestFile: File?
+    public var longestFile: SourceFile?
 
     /// The nmber of lines in the longest type
-    var longestTypeLength = 0
+    public var longestTypeLength = 0
 
     /// The Type object storing the longest file that was scanned
-    var longestType: Type?
+    public var longestType: Type?
 
     /// A count of how many functions were detected
-    var functionCount = 0
+    public var functionCount = 0
 
     /// A count of how many functions were preceded by documentation comments
-    var documentedFunctionCount = 0
+    public var documentedFunctionCount = 0
 
     /// The total number of lines of code scanned across all files
-    var totalLinesOfCode: Int {
+    public var totalLinesOfCode: Int {
         totalCode.lines.count
     }
 
     /// The total number of stripped lines of code scanned across all files
-    var totalStrippedLinesOfCode: Int {
+    public var totalStrippedLinesOfCode: Int {
         totalStrippedCode.lines.count
     }
 
     /// How many classes inherit from UIView
-    var uiKitViewCount: Int {
+    public var uiKitViewCount: Int {
         classes.sum { $0.inheritance.first == "UIView" }
     }
 
     /// How many classes inherit from UIViewController
-    var uiKitViewControllerCount: Int {
+    public var uiKitViewControllerCount: Int {
         classes.sum { $0.inheritance.first == "UIViewController" }
     }
 
     /// How many structs conform to View
-    var swiftUIViewCount: Int {
+    public var swiftUIViewCount: Int {
         structs.sum { $0.inheritance.contains("View") }
     }
 }

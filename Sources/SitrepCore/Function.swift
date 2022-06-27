@@ -11,9 +11,9 @@
 import Foundation
 
 /// Represents one function or method in our parsed code.
-class Function: Node {
+public class Function: Node {
     /// Stores whether the function is throwing or not
-    enum ThrowingStatus: String {
+    public enum ThrowingStatus: String {
         case none, `throws`, `rethrows`, unknown
     }
 
@@ -23,19 +23,19 @@ class Function: Node {
     }
 
     /// The function name
-    let name: String
+    public let name: String
 
     /// The parameter names received by the function
-    let parameters: [String]
+    public let parameters: [String]
 
     /// Whether the function is static or not
-    let isStatic: Bool
+    public let isStatic: Bool
 
     /// Whether the function throws errors or not
-    let throwingStatus: ThrowingStatus
+    public let throwingStatus: ThrowingStatus
 
     /// The data type returned by the function
-    let returnType: String
+    public let returnType: String
 
     /// Creates an instance of Function using all its parameters
     init(name: String, parameters: [String], isStatic: Bool, throwingStatus: ThrowingStatus, returnType: String) {
@@ -47,7 +47,7 @@ class Function: Node {
     }
 
     /// Encodes the function, so we can produce debug output
-    override func encode(to encoder: Encoder) throws {
+    public override func encode(to encoder: Encoder) throws {
         try super.encode(to: encoder)
 
         var container = encoder.container(keyedBy: CodingKeys.self)

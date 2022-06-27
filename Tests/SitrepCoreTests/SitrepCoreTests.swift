@@ -24,7 +24,7 @@ final class SitrepCoreTests: XCTestCase {
     }
 
     func testClassDetection() throws {
-        let file = try File(sourceCode: testClass)
+        let file = try SourceFile(sourceCode: testClass)
 
         XCTAssertEqual(file.results.rootNode.types.count, 1)
 
@@ -39,7 +39,7 @@ final class SitrepCoreTests: XCTestCase {
     }
 
     func testStructDetection() throws {
-        let file = try File(sourceCode: testStruct)
+        let file = try SourceFile(sourceCode: testStruct)
 
         XCTAssertEqual(file.results.rootNode.types.count, 1)
 
@@ -54,7 +54,7 @@ final class SitrepCoreTests: XCTestCase {
     }
 
     func testEnumDetection() throws {
-        let file = try File(sourceCode: testEnum)
+        let file = try SourceFile(sourceCode: testEnum)
 
         XCTAssertEqual(file.results.rootNode.types.count, 1)
 
@@ -71,7 +71,7 @@ final class SitrepCoreTests: XCTestCase {
     }
 
     func testProtocolDetection() throws {
-        let file = try File(sourceCode: testProtocol)
+        let file = try SourceFile(sourceCode: testProtocol)
 
         XCTAssertEqual(file.results.rootNode.types.count, 1)
 
@@ -86,7 +86,7 @@ final class SitrepCoreTests: XCTestCase {
     }
 
     func testExtensionDetection() throws {
-        let file = try File(sourceCode: testExtension)
+        let file = try SourceFile(sourceCode: testExtension)
 
         XCTAssertEqual(file.results.rootNode.types.count, 1)
 
@@ -101,13 +101,13 @@ final class SitrepCoreTests: XCTestCase {
     }
 
     func testImportDetection() throws {
-        let file = try File(sourceCode: testImports)
+        let file = try SourceFile(sourceCode: testImports)
         XCTAssertEqual(file.results.imports.count, 3)
     }
 
     func testLineCounting() throws {
         let input = try getInput("nesting.swift")
-        let file = try File(url: input)
+        let file = try SourceFile(url: input)
 
         XCTAssertEqual(file.results.body.lines.count, 32)
         XCTAssertEqual(file.results.strippedBody.lines.count, 23)
@@ -171,7 +171,7 @@ final class SitrepCoreTests: XCTestCase {
 
     func testEncoding() throws {
         let input = try getInput("class.swift")
-        let file = try File(url: input)
+        let file = try SourceFile(url: input)
         let json = try file.debugPrint()
         XCTAssertEqual(json.count, 2113)
     }

@@ -1,14 +1,51 @@
 import SwiftSyntax
 import Foundation
+import Cocoa
 
-open class SyntaxVisitorViewer: SyntaxVisitor {
+open class SyntaxVisitorViewer: SyntaxVisitor, VisitorProtocol {
+
+    var rootNode: Node = Node()
+    var strippedBody: String = ""
+    var body: String = ""
+    var imports: [String] = []
+
+    var indent = 0
+
+    func demangle(_ string: String) -> String {
+        let elements = string.components(separatedBy: " ").filter({ !$0.isEmpty })
+//        if elements.count > 3 {
+//            let symbol = elements[3]
+//            let fixed = String(symbol[symbol.index(after: symbol.startIndex)...])
+//
+//            let task = Process()
+//            task.executableURL = URL(fileURLWithPath: "/usr/bin/swift")
+//            task.arguments = ["demangle", fixed]
+//            let outputPipe = Pipe()
+//            let errPipe = Pipe()
+//            task.standardOutput = outputPipe
+//            task.standardError = errPipe
+//            try? task.run()
+//            task.waitUntilExit()
+//            let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+//            let output = String(decoding: outputData, as: UTF8.self)
+//            return (output.components(separatedBy: " ---> ").last ?? "wat").trimmingCharacters(in: .whitespacesAndNewlines)
+//        }
+        return elements.joined(separator: "|")
+    }
+
+    func indentString() -> String {
+        String(repeating: "-", count: indent)
+    }
+
+
     /// Visiting `UnknownSyntax` specifically.
     ///   - Parameter node: the node we are visiting.
     ///   - Returns: how should we continue visiting.
     open func visitAny(_ node: Syntax) -> SyntaxVisitorContinueKind {
         let symbols = Thread.callStackSymbols
-        let caller = symbols[symbols.count - 2]
-        print("visitAny: \(caller)")
+        let caller = symbols[1]
+        print("VA:\(indentString())|\(demangle(caller))|")
+        indent += 1
         return .visitChildren
     }
 
@@ -16,8 +53,9 @@ open class SyntaxVisitorViewer: SyntaxVisitor {
     ///   - node: the node we just finished visiting.
     open func visitAnyPost(_ node: Syntax) {
         let symbols = Thread.callStackSymbols
-        let caller = symbols[symbols.count - 2]
-        print("visitAnyPost: \(caller)")
+        let caller = symbols[1]
+        indent -= 1
+        print("VP:\(indentString())|\(demangle(caller))|")
     }
 
     // MARK: Override type specific visit methods
@@ -878,6 +916,7 @@ open class SyntaxVisitorViewer: SyntaxVisitor {
     override open func visitPost(_ node: AccessorBlockSyntax) {
         visitAnyPost(node._syntaxNode)
     }
+
     override open func visit(_ node: PatternBindingSyntax) -> SyntaxVisitorContinueKind {
         return visitAny(node._syntaxNode)
     }
