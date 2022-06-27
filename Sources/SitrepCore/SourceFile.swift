@@ -10,19 +10,25 @@
 
 import Foundation
 import SwiftSyntax
+import SwiftSyntaxParser
 
 /// Represents one file in the source code input
-public struct File {
+public struct SourceFile {
     /// The file URL this is scanning
-    let url: URL?
+    public let url: URL?
+    public let debug: Bool = false
 
     /// The active scanner that walks through the code
-    var results: FileVisitor
+    var results: SyntaxVisitor & VisitorProtocol
 
     /// Creates an instance of the scanner from a file, then starts it walking through code
-    init(url: URL) throws {
+    init(url: URL, debug: Bool = false) throws {
         self.url = url
-        results = FileVisitor()
+        if debug {
+            results = SyntaxVisitorViewer()
+        } else {
+            results = FileVisitor()
+        }
 
         do {
             let sourceFile = try SyntaxParser.parse(url)
